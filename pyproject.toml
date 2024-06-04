@@ -1,0 +1,41 @@
+[project]
+name = "keyring-proxy-env"
+version = "0.2.1"
+description = "Default template for PDM package"
+authors = [
+    {name = "Kalle M. Aagaard", email = "git@k-moeller.dk"},
+]
+dependencies = [
+    "keyring>=25.2.1",
+    "typing-extensions>=4.12.1",
+]
+requires-python = ">=3.9"
+readme = "README.md"
+license = {text = "MIT"}
+
+[project.urls]
+Repository = "https://github.com/KalleDK/py-keyring-proxy-env"
+
+[project.entry-points."keyring.backends"]
+EnvProxyBackend = "keyring_proxy_env:EnvProxyBackend"
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.dev-dependencies]
+tools = ["ruff>=0.4.6", "black>=24.4.2", "mypy>=1.10.0"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+
+[tool.black]
+line-length = 120
+
+[tool.pyright]
+include = ["src", "tests"]
+
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
