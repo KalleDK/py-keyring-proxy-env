@@ -2,16 +2,16 @@ import dataclasses
 import logging
 import os
 
-from typing_extensions import Self, Optional
-from jaraco.classes import properties
 import keyring.backend
 import keyring.credentials
 import keyring.errors
-
+from jaraco.classes import properties
+from typing_extensions import Optional, Self
 
 PRIORITY = 9.9
 
 logger = logging.getLogger(__name__)
+
 
 @dataclasses.dataclass
 class Credential:
@@ -27,7 +27,8 @@ class Credential:
 
 
 def make_key(*args: str) -> str:
-    return "_".join(arg.upper().replace("-", "_").replace(".","_") for arg in args)
+    return "_".join(arg.upper().replace("-", "_").replace(".", "_") for arg in args)
+
 
 def get_key(key: str) -> Optional[str]:
     logger.debug(f"Getting {key!r}")
@@ -45,26 +46,27 @@ class EnvProxyBackend(keyring.backend.KeyringBackend):
         if self.log:
             logging.basicConfig(level=logging.DEBUG)
 
-
     @properties.classproperty
     def priority(cls):
         return PRIORITY
-    
 
     def _get_cred(self, service: str, username: Optional[str]):
         if username is None:
             username_key = make_key(self.prefix, service, "USERNAME")
-            username = get_key(username_key)        
-        if username is None:
-            password_key = make_key(self.prefix, service, "PASSWORD")
-        else:
+            username = get_key(username_key)
+        if username is not None:
             password_key = make_key(self.prefix, service, username, "PASSWORD")
-        
-        password = get_key(password_key)
-        
+            password = get_key(password_key)
+            if password is None:
+                password_key = make_key(self.prefix, service, "PASSWORD")
+                password = get_key(password_key)
+        else:
+            password_key = make_key(self.prefix, service, "PASSWORD")
+            password = get_key(password_key)
+
         if username is None and password is None:
             return None
-        
+
         return Credential(username, password)
 
     def get_credential(self, service: str, username: Optional[str]) -> Optional[keyring.credentials.Credential]:
