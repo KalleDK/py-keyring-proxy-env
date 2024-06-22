@@ -18,7 +18,9 @@ class Credential:
     username: Optional[str]
     password: Optional[str]
 
-    def to_keyring_cred(self) -> keyring.credentials.Credential:
+    def to_keyring_cred(self) -> Optional[keyring.credentials.Credential]:
+        if self.username is None and self.password is None:
+            return None
         return keyring.credentials.SimpleCredential(self.username, self.password)
 
     @classmethod
@@ -26,8 +28,8 @@ class Credential:
         return cls(cred.username, cred.password)
 
 
-def make_key(*args: str) -> str:
-    return "_".join(arg.upper().replace("-", "_").replace(".", "_") for arg in args)
+def make_key(*args: Optional[str]) -> str:
+    return "_".join(arg.upper().replace("-", "_").replace(".", "_") for arg in args if arg is not None and arg != "")
 
 
 def get_key(key: str) -> Optional[str]:
@@ -36,10 +38,11 @@ def get_key(key: str) -> Optional[str]:
 
 
 class EnvProxyBackend(keyring.backend.KeyringBackend):
-
     logfile: str = "keyring-proxy.log"
     log: bool = False
-    prefix: str = "KEYRING"
+    prefix: Optional[str] = "KEYRING"
+    username_suffix: Optional[str] = "USERNAME"
+    password_suffix: Optional[str] = "PASSWORD"
 
     def __init__(self):
         super().__init__()
@@ -50,38 +53,27 @@ class EnvProxyBackend(keyring.backend.KeyringBackend):
     def priority(cls):
         return PRIORITY
 
-    def _get_cred(self, service: str, username: Optional[str]):
-        if username is None:
-            username_key = make_key(self.prefix, service, "USERNAME")
-            username = get_key(username_key)
-        if username is not None:
-            password_key = make_key(self.prefix, service, username, "PASSWORD")
-            password = get_key(password_key)
-            if password is None:
-                password_key = make_key(self.prefix, service, "PASSWORD")
-                password = get_key(password_key)
-        else:
-            password_key = make_key(self.prefix, service, "PASSWORD")
-            password = get_key(password_key)
+    def _get_username(self, service: str):
+        username_key = make_key(self.prefix, service, self.username_suffix)
+        return get_key(username_key)
 
-        if username is None and password is None:
-            return None
+    def _get_password(self, service: str, username: Optional[str]):
+        password_key = make_key(self.prefix, service, username, self.password_suffix)
+        return get_key(password_key)
+
+    def _get_cred(self, service: str, username: Optional[str]):
+        username = username if username is not None else self._get_username(service)
+        password = self._get_password(service, username)
 
         return Credential(username, password)
 
     def get_credential(self, service: str, username: Optional[str]) -> Optional[keyring.credentials.Credential]:
         logger.debug(f"get_credential({service!r}, {username!r})")
-        result = self._get_cred(service, username)
-        if result is None:
-            return None
-        return result.to_keyring_cred()
+        return self._get_cred(service, username).to_keyring_cred()
 
     def get_password(self, service: str, username: str) -> Optional[str]:
         logger.debug(f"get_password({service!r}, {username!r})")
-        cred = self._get_cred(service, username)
-        if cred is None:
-            return None
-        return cred.password
+        return self._get_password(service, username)
 
     def set_password(self, service: str, username: str, password: str):
         raise keyring.errors.PasswordSetError("set_password not implemented")
