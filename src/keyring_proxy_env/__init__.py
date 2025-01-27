@@ -29,7 +29,11 @@ class Credential:
 
 
 def make_key(*args: Optional[str]) -> str:
-    return "_".join(arg.upper().replace("-", "_").replace(".", "_") for arg in args if arg is not None and arg != "")
+    return "_".join(
+        arg.upper().replace("-", "_").replace(".", "_").replace("/", "_").replace(" ", "_")
+        for arg in args
+        if arg is not None and arg != ""
+    )
 
 
 def get_key(key: str) -> Optional[str]:
