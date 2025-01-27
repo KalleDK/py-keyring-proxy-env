@@ -9,46 +9,28 @@ vars:
   DEPS: []
 
 tasks:
+  publish:
+    deps:
+      - build
+    cmds:
+      - uv publish --keyring-provider=subprocess --username=__token__
+      - git push
+  build:
+    cmds:
+      - '{{.SHELL}} rm -r {{if eq .OS "Windows_NT"}}-Force{{else}}-f{{end}} dist'
+      - uv build
   release:
     cmds:
       - bump-my-version bump patch
       - task: sync
-      - pdm publish
-      - git push
+      - task: publish
   devrel:
     cmds:
       - git add .
       - if git commit --dry-run --short; then git commit -m "devrel"; else echo nothing changed; fi
       - bump-my-version bump build
       - task: sync
-      - pdm publish
-      - git push
-  update:
-    cmds:
-      - for: { var: DEPS }
-        cmd: pdm add "{{.ITEM}}"
-      - git add pdm.lock pyproject.toml
-      - if git commit --dry-run --short; then git commit -m "Updated deps"; else echo nothing updated; fi
-  create_venv:
-    cmds:
-      - python -m venv {{.VENV_DIR}}
-    status:
-      - test -f {{.VENV_PYTHON}}
-  use_venv:
-    deps:
-      - create_venv
-    cmds:
-      - pdm use -i {{.VENV_PYTHON}}
-    status:
-      - test -f .pdm-python
-      - test $(dirname $(dirname $(pdm info --python))) -ef {{.VENV_DIR}}
+      - task: publish
   sync:
     cmds:
-      - pdm sync --without tools --only-keep
-  init:
-    deps:
-      - use_venv
-    cmds:
-      - task: sync
-      - for: { var: DEPS }
-        cmd: pdm add -e ../py-{{.ITEM}} --dev
+      - uv sync

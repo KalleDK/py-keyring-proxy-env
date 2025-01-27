@@ -1,0 +1,22 @@
+[tool.bumpversion]
+current_version = "0.2.10"
+commit = true
+parse = "(?P<major>\\d+).(?P<minor>\\d+).(?P<patch>\\d+)(\\.(?P<build>\\d+))?"
+serialize = [
+	"{major}.{minor}.{patch}.{build}",
+	"{major}.{minor}.{patch}",
+]
+pre_commit_hooks = [
+	"uv lock",
+	"git add uv.lock",
+]
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = "version = \"{current_version}\""
+replace = "version = \"{new_version}\""
+
+[[tool.bumpversion.files]]
+filename = "src/keyring_proxy_env/_version.py"
+search = "__version__ = \"{current_version}\""
+replace = "__version__ = \"{new_version}\""
