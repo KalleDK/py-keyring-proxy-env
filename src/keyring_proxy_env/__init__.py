@@ -8,7 +8,7 @@ import keyring.errors
 from jaraco.classes import properties
 from typing_extensions import Optional, Self
 
-PRIORITY = 9.9
+PRIORITY = 9.8
 
 logger = logging.getLogger(__name__)
 
