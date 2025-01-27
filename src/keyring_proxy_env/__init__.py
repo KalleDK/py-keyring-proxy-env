@@ -19,8 +19,12 @@ class Credential:
     password: Optional[str]
 
     def to_keyring_cred(self) -> Optional[keyring.credentials.Credential]:
-        if self.username is None and self.password is None:
+        if self.password is None:
             return None
+
+        if self.username is None:
+            return keyring.credentials.AnonymousCredential(self.password)
+
         return keyring.credentials.SimpleCredential(self.username, self.password)
 
     @classmethod
@@ -44,7 +48,7 @@ def get_key(key: str) -> Optional[str]:
 class EnvProxyBackend(keyring.backend.KeyringBackend):
     logfile: str = "keyring-proxy.log"
     log: bool = False
-    prefix: Optional[str] = "KEYRING"
+    prefix: Optional[str] = "KP"
     username_suffix: Optional[str] = "USERNAME"
     password_suffix: Optional[str] = "PASSWORD"
 
@@ -72,7 +76,6 @@ class EnvProxyBackend(keyring.backend.KeyringBackend):
     def _get_cred(self, service: str, username: Optional[str]):
         username = username if username is not None else self._get_username(service)
         password = self._get_password(service, username)
-
         return Credential(username, password)
 
     def get_credential(self, service: str, username: Optional[str]) -> Optional[keyring.credentials.Credential]:
