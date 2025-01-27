@@ -11,7 +11,7 @@ vars:
 tasks:
   release:
     cmds:
-      - bumpversion patch
+      - bump-my-version bump patch
       - task: sync
       - pdm publish
       - git push
@@ -19,7 +19,7 @@ tasks:
     cmds:
       - git add .
       - if git commit --dry-run --short; then git commit -m "devrel"; else echo nothing changed; fi
-      - bumpversion build
+      - bump-my-version bump build
       - task: sync
       - pdm publish
       - git push
