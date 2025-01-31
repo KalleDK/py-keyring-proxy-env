@@ -19,13 +19,11 @@ class Credential:
     password: Optional[str]
 
     def to_keyring_cred(self) -> Optional[keyring.credentials.Credential]:
-        if self.password is None:
-            return None
-
         if self.username is None:
+            if self.password is None:
+                return None
             return keyring.credentials.AnonymousCredential(self.password)
-
-        return keyring.credentials.SimpleCredential(self.username, self.password)
+        return keyring.credentials.SimpleCredential(self.username, self.password or "")
 
     @classmethod
     def from_keyring_cred(cls, cred: keyring.credentials.Credential) -> Self:
