@@ -1,6 +1,6 @@
 [project]
 name = "keyring-proxy-env"
-version = "0.2.12.5"
+version = "0.2.12.6"
 description = "Default template for PDM package"
 authors = [
     {name = "Kalle M. Aagaard", email = "git@k-moeller.dk"},
